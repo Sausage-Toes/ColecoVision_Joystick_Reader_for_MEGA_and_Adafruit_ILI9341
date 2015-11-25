@@ -28,19 +28,31 @@ Adafruit_STMPE610 ts = Adafruit_STMPE610(STMPE_CS);
 #define IN_PIN_8 36 //Grey
 #define IN_PIN_9 38 //White
 
+//Define Output Pins on MEGA
+#define OUT_PIN_1 23 //Brown
+#define OUT_PIN_2 25 //Red
+#define OUT_PIN_3 27 //Orange
+#define OUT_PIN_4 29 //Yellow
+#define OUT_PIN_5 31 //Green
+#define OUT_PIN_6 33 //Blue
+#define OUT_PIN_7 35 //Purple
+#define OUT_PIN_8 37 //Grey
+#define OUT_PIN_9 39 //White
+
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 uint8_t rotation=1;
 bool input_initialized = false;
 int h, w, x, y, xk, yk, xt, yt = 0;
 bool k1,k2,k3,k4,k5,k6,k7,k8,k9,k0,ka,kp = false;
 bool ok1,ok2,ok3,ok4,ok5,ok6,ok7,ok8,ok9,ok0,oka,okp = false;
-bool p1,p2,p3,p4,p5,p6,p7,p8,p9 = false;
-bool op1,op2,op3,op4,op5,op6,op7,op8,op9 =false;
+bool p[9] = {false, false, false, false, false, false, false, false, false};
+bool op[9] = {false, false, false, false, false, false, false, false, false};
+uint16_t c[9] = {0x8200, ILI9341_RED, ILI9341_ORANGE, ILI9341_YELLOW, ILI9341_DARKGREEN, ILI9341_NAVY, ILI9341_PURPLE, ILI9341_DARKGREY,  ILI9341_WHITE}; 
 
 bool showInputPins = true;
 int inputPinDisplay_x = 30, inputPinDisplay_y = 212;
 int mode = 0;
-
+String portDisp = "OUTPUT";
 
 void setup() 
 {
@@ -54,166 +66,61 @@ void setup()
   if (mode == 0) ts.begin();
 }
 
-
 void loop()
 {
   if (mode == 0)
   {
     if (!input_initialized)
     {
-      InitializeController_Port_All_INPUT();
-      //InitializeController_Coleco_Flashback();
-      //if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
-      //op1=!p1,op2=!p2,op3=!p3,op4=!p4,op5=!p5,op6=!p6,op7=!p7,op8=!p8,op9=!p9;
-      drawInputPins(40,60,20);
+      if (portDisp == "OUTPUT")
+      {
+        InitializeController_Port_All_OUT();
+      }
+      else
+      {
+        InitializeController_Port_All_INPUT();
+      }
+      drawPortPins(40,60,20, portDisp);
+      for (int i = 0; i < 9 ; i++ ) op[i] = !p[i];
+      tft.setCursor(x,y);
+      tft.setTextColor(ILI9341_WHITE,ILI9341_BLACK);
+      tft.setTextSize(2);
+      tft.print(portDisp);
+      
     }
     
-    drawInputPins(40,60,20);
-
-    if (ts.bufferEmpty()) 
-    {
-      return;
-    }
-     // Retrieve a point 
-     TS_Point p; 
-     while (ts.touched())
-     {
-        p = ts.getPoint();
-     }
-
-
-    // Scale from ~0->4000 to tft.width using the calibration #'s
-    TS_Point t;
-    t.x = constrain(p.x,TS_MINX,TS_MAXX);
-    t.y = constrain(p.y,TS_MINY,TS_MAXY);
-    //rotate x,y
-    p.x = map(t.y, TS_MINY, TS_MAXY, 0, tft.width());
-    p.y = map(t.x, TS_MINX, TS_MAXX, tft.height(), 0);
-   
-    Serial.print("("); Serial.print(p.x);
-    Serial.print(", "); Serial.print(p.y);
-    Serial.println(")");
+    drawPortPins(40,60,20, portDisp);
     
-    if ((p.x >=  60 && p.x < 100) && (p.y >= 30  && p.y < 65 ))  
+    switch (readTouchScreen())
     {
-      Serial.println("ONE");
-      if (digitalRead(IN_PIN_1) == HIGH)
-      {
-        pinMode(IN_PIN_1, OUTPUT);
-        digitalWrite(IN_PIN_1, LOW);
-      }
-      else
-      {
-        pinMode (IN_PIN_1, INPUT_PULLUP);
-      }
+      case 1:
+        togglePin(IN_PIN_1);
+        break;
+      case 2:
+        togglePin(IN_PIN_2);
+        break;
+      case 3:
+        togglePin(IN_PIN_3);
+        break;
+      case 4:
+        togglePin(IN_PIN_4);
+        break;
+      case 5:
+        togglePin(IN_PIN_5);
+        break;
+      case 6:
+        togglePin(IN_PIN_6);
+        break;
+      case 7:
+        togglePin(IN_PIN_7);
+        break;
+      case 8:
+        togglePin(IN_PIN_8);
+        break;
+      case 9:
+        togglePin(IN_PIN_9);
+        break;
     }
-    
-    if ((p.x >= 100 && p.x < 140) && (p.y >= 30  && p.y < 65 )) 
-    {
-      Serial.println("TWO");
-      if (digitalRead(IN_PIN_2) == HIGH)
-      {
-        pinMode(IN_PIN_2, OUTPUT);
-        digitalWrite(IN_PIN_2, LOW);
-      }
-      else
-      {
-        pinMode (IN_PIN_2, INPUT_PULLUP);
-      }
-    }
-    if ((p.x >= 140 && p.x < 190) && (p.y >= 30  && p.y < 65 ))  
-    {
-      Serial.println("THREE");
-      if (digitalRead(IN_PIN_3) == HIGH)
-      {
-        pinMode(IN_PIN_3, OUTPUT);
-        digitalWrite(IN_PIN_3, LOW);
-      }
-      else
-      {
-        pinMode (IN_PIN_3, INPUT_PULLUP);
-      }
-    }
-    if ((p.x >= 190 && p.x < 230) && (p.y >= 30  && p.y < 65 ))  
-    {
-      Serial.println("FOUR");
-      if (digitalRead(IN_PIN_4) == HIGH)
-      {
-        pinMode(IN_PIN_4, OUTPUT);
-        digitalWrite(IN_PIN_4, LOW);
-      }
-      else
-      {
-        pinMode (IN_PIN_4, INPUT_PULLUP);
-      }
-    }
-    if ((p.x >= 230 && p.x < 280) && (p.y >= 30  && p.y < 65 ))  
-    {
-      Serial.println("FIVE");
-      if (digitalRead(IN_PIN_5) == HIGH)
-      {
-        pinMode(IN_PIN_5, OUTPUT);
-        digitalWrite(IN_PIN_5, LOW);
-      }
-      else
-      {
-        pinMode (IN_PIN_5, INPUT_PULLUP);
-      }
-    }
-        
-    if ((p.x >=  95 && p.x < 125) && (p.y >= 80  && p.y < 120 ))  
-    {
-      Serial.println("SIX");
-      if (digitalRead(IN_PIN_6) == HIGH)
-      {
-        pinMode(IN_PIN_6, OUTPUT);
-        digitalWrite(IN_PIN_6, LOW);
-      }
-      else
-      {
-        pinMode (IN_PIN_6, INPUT_PULLUP);
-      }
-    }
-    if ((p.x >= 125 && p.x < 165) && (p.y >= 80  && p.y < 120 ))  
-    {
-      Serial.println("SEVEN");
-      if (digitalRead(IN_PIN_7) == HIGH)
-      {
-        pinMode(IN_PIN_7, OUTPUT);
-        digitalWrite(IN_PIN_7, LOW);
-      }
-      else
-      {
-        pinMode (IN_PIN_7, INPUT_PULLUP);
-      }
-    }
-    if ((p.x >= 165 && p.x < 215) && (p.y >= 80  && p.y < 120 ))  
-    {
-      Serial.println("EIGHT");
-      if (digitalRead(IN_PIN_8) == HIGH)
-      {
-        pinMode(IN_PIN_8, OUTPUT);
-        digitalWrite(IN_PIN_8, LOW);
-      }
-      else
-      {
-        pinMode (IN_PIN_8, INPUT_PULLUP);
-      }
-    }
-    if ((p.x >= 215 && p.x < 255) && (p.y >= 80  && p.y < 120 ))  
-    {
-      Serial.println("NINE");
-      if (digitalRead(IN_PIN_9) == HIGH)
-      {
-        pinMode(IN_PIN_9, OUTPUT);
-        digitalWrite(IN_PIN_9, LOW);
-      }
-      else
-      {
-        pinMode (IN_PIN_9, INPUT_PULLUP);
-      }
-    }
-    
   }
   if (mode == 1)
   {
@@ -234,7 +141,11 @@ void loop()
     }
     ReadJoystick_Coleco_Flashback();
     ReadButtons_Coleco_Flashback();
-    ReadKeypad_Coleco_Flashback();
+    ReadKeyColumn1();
+    ReadKeyColumn2();
+    ReadKeyColumn3();
+    drawKeyPress();
+    //ReadKeypad_Coleco_Flashback();
   }
 }
 
@@ -252,12 +163,26 @@ void InitializeController_Port_All_INPUT()
   input_initialized = true;
 }
 
+void InitializeController_Port_All_OUT()
+{
+  pinMode (OUT_PIN_1, INPUT_PULLUP); 
+  pinMode (OUT_PIN_2, INPUT_PULLUP); 
+  pinMode (OUT_PIN_3, INPUT_PULLUP); 
+  pinMode (OUT_PIN_4, INPUT_PULLUP); 
+  pinMode (OUT_PIN_5, INPUT_PULLUP); 
+  pinMode (OUT_PIN_6, INPUT_PULLUP); 
+  pinMode (OUT_PIN_7, INPUT_PULLUP); 
+  pinMode (OUT_PIN_8, INPUT_PULLUP);
+  pinMode (OUT_PIN_9, INPUT_PULLUP); 
+  input_initialized = true;
+}
+
 void InitializeController_Coleco_Flashback()
 {
   pinMode (IN_PIN_1, INPUT_PULLUP); // + pin2 low = RB
   pinMode (IN_PIN_2, INPUT_PULLUP); //up
   pinMode (IN_PIN_3, OUTPUT); digitalWrite(IN_PIN_3, LOW); //Common
-  p3 = false; op3 = true;
+  p[2] = false; op[2] = true;
   pinMode (IN_PIN_4, INPUT_PULLUP); 
   pinMode (IN_PIN_5, INPUT_PULLUP); //down
   pinMode (IN_PIN_6, INPUT_PULLUP); //left
@@ -289,7 +214,7 @@ void ReadJoystick_Coleco_Flashback()
     if (digitalRead(IN_PIN_5) == LOW) drawDown(ILI9341_GREEN); else drawDown(ILI9341_BLACK);
     if (digitalRead(IN_PIN_6) == LOW) drawLeft(ILI9341_GREEN); else drawLeft(ILI9341_BLACK);
     if (digitalRead(IN_PIN_7) == LOW) drawRight(ILI9341_GREEN); else drawRight(ILI9341_BLACK);
-    if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
+    if (showInputPins) drawPortPins(inputPinDisplay_x,inputPinDisplay_y,8, portDisp);
 }
 
 void ReadButtons_Coleco_Flashback()
@@ -297,43 +222,78 @@ void ReadButtons_Coleco_Flashback()
   pinMode (IN_PIN_2, OUTPUT); digitalWrite(IN_PIN_2, LOW);
   if (digitalRead(IN_PIN_1) == LOW) drawButton(-1,ILI9341_GREEN); else drawButton(-1,ILI9341_BLACK);
   if (digitalRead(IN_PIN_8) == LOW) drawButton(1,ILI9341_GREEN); else drawButton(1,ILI9341_BLACK);
-  if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
+  if (showInputPins) drawPortPins(inputPinDisplay_x,inputPinDisplay_y,8, portDisp);
   digitalWrite(IN_PIN_2, HIGH); pinMode (IN_PIN_2, INPUT_PULLUP);
 }
 
-void ReadKeypad_Coleco_Flashback()
+void ReadKeyColumn1()
 {
-  digitalWrite(IN_PIN_3, HIGH); // mask joystick
-  pinMode (IN_PIN_9, OUTPUT); digitalWrite(IN_PIN_9, LOW); 
-  k1 = digitalRead(IN_PIN_5) == LOW;
-  k2 = digitalRead(IN_PIN_6) == LOW;
-  k3 = digitalRead(IN_PIN_7) == LOW;
-    if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
-  digitalWrite(IN_PIN_9, HIGH); pinMode (IN_PIN_9, INPUT_PULLUP); 
-
-  pinMode (IN_PIN_4, OUTPUT); digitalWrite(IN_PIN_4, LOW); 
-  k4 = digitalRead(IN_PIN_5) == LOW;
-  k5 = digitalRead(IN_PIN_6) == LOW;
-  k6 = digitalRead(IN_PIN_7) == LOW;
-  if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
-  digitalWrite(IN_PIN_4, HIGH); pinMode (IN_PIN_4, INPUT_PULLUP); 
-  
-  pinMode (IN_PIN_8, OUTPUT); digitalWrite(IN_PIN_8, LOW); 
-  k7 = digitalRead(IN_PIN_5) == LOW;
-  k8 = digitalRead(IN_PIN_6) == LOW;
-  k9 = digitalRead(IN_PIN_7) == LOW;
-  if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
-  digitalWrite(IN_PIN_8, HIGH); pinMode (IN_PIN_8, INPUT_PULLUP); 
-   
-  pinMode (IN_PIN_1, OUTPUT); digitalWrite(IN_PIN_1, LOW); 
-  ka = digitalRead(IN_PIN_5) == LOW;
-  k0 = digitalRead(IN_PIN_6) == LOW;
-  kp = digitalRead(IN_PIN_7) == LOW;
-  if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
-  digitalWrite(IN_PIN_1, HIGH); pinMode (IN_PIN_1, INPUT_PULLUP); 
-  drawKeyPress();
-  digitalWrite(IN_PIN_3, LOW);
+  pinMode (IN_PIN_5, OUTPUT); digitalWrite(IN_PIN_5, LOW);
+  k1 = digitalRead(IN_PIN_9) == LOW;
+  k4 = digitalRead(IN_PIN_4) == LOW;
+  k7 = digitalRead(IN_PIN_8) == LOW;
+  ka = digitalRead(IN_PIN_1) == LOW;
+  if (showInputPins) drawPortPins(inputPinDisplay_x,inputPinDisplay_y,8, portDisp);
+  digitalWrite(IN_PIN_5, HIGH); pinMode (IN_PIN_5, INPUT_PULLUP);
 }
+
+void ReadKeyColumn2()
+{
+  pinMode (IN_PIN_6, OUTPUT); digitalWrite(IN_PIN_6, LOW);
+  k2 = digitalRead(IN_PIN_9) == LOW;
+  k5 = digitalRead(IN_PIN_4) == LOW;
+  k8 = digitalRead(IN_PIN_8) == LOW;
+  k0 = digitalRead(IN_PIN_1) == LOW;
+  if (showInputPins) drawPortPins(inputPinDisplay_x,inputPinDisplay_y,8, portDisp);
+  digitalWrite(IN_PIN_6, HIGH); pinMode (IN_PIN_6, INPUT_PULLUP);
+}
+
+void ReadKeyColumn3()
+{
+  pinMode (IN_PIN_7, OUTPUT); digitalWrite(IN_PIN_7, LOW);
+  k3 = digitalRead(IN_PIN_9) == LOW;
+  k6 = digitalRead(IN_PIN_4) == LOW;
+  k9 = digitalRead(IN_PIN_8) == LOW;
+  kp = digitalRead(IN_PIN_1) == LOW;
+  if (showInputPins) drawPortPins(inputPinDisplay_x,inputPinDisplay_y,8, portDisp);
+  digitalWrite(IN_PIN_7, HIGH); pinMode (IN_PIN_7, INPUT_PULLUP);
+}
+
+//void ReadKeypad_Coleco_Flashback()
+//{
+//  digitalWrite(IN_PIN_3, HIGH); // mask joystick
+//  pinMode (IN_PIN_9, OUTPUT); digitalWrite(IN_PIN_9, LOW); 
+//  k1 = digitalRead(IN_PIN_5) == LOW;
+//  k2 = digitalRead(IN_PIN_6) == LOW;
+//  k3 = digitalRead(IN_PIN_7) == LOW;
+//  if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
+//  digitalWrite(IN_PIN_9, HIGH); pinMode (IN_PIN_9, INPUT_PULLUP); 
+//
+//  pinMode (IN_PIN_4, OUTPUT); digitalWrite(IN_PIN_4, LOW); 
+//  k4 = digitalRead(IN_PIN_5) == LOW;
+//  k5 = digitalRead(IN_PIN_6) == LOW;
+//  k6 = digitalRead(IN_PIN_7) == LOW;
+//  if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
+//  digitalWrite(IN_PIN_4, HIGH); pinMode (IN_PIN_4, INPUT_PULLUP); 
+//  
+//  pinMode (IN_PIN_8, OUTPUT); digitalWrite(IN_PIN_8, LOW); 
+//  k7 = digitalRead(IN_PIN_5) == LOW;
+//  k8 = digitalRead(IN_PIN_6) == LOW;
+//  k9 = digitalRead(IN_PIN_7) == LOW;
+//  if (digitalRead(IN_PIN_2) == LOW) drawButton(1,ILI9341_GREEN); else drawButton(1,ILI9341_BLACK); //right button
+//  if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
+//  digitalWrite(IN_PIN_8, HIGH); pinMode (IN_PIN_8, INPUT_PULLUP); 
+//   
+//  pinMode (IN_PIN_1, OUTPUT); digitalWrite(IN_PIN_1, LOW); 
+//  ka = digitalRead(IN_PIN_5) == LOW;
+//  k0 = digitalRead(IN_PIN_6) == LOW;
+//  kp = digitalRead(IN_PIN_7) == LOW;
+//  if (digitalRead(IN_PIN_2) == LOW) drawButton(-1,ILI9341_GREEN); else drawButton(-1,ILI9341_BLACK); //left button
+//  if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
+//  digitalWrite(IN_PIN_1, HIGH); pinMode (IN_PIN_1, INPUT_PULLUP); 
+//  drawKeyPress();
+//  digitalWrite(IN_PIN_3, LOW);
+//}
 
 void ReadJoystick_Coleco()
 {
@@ -343,7 +303,7 @@ void ReadJoystick_Coleco()
   if (digitalRead(IN_PIN_3) == LOW) drawLeft(ILI9341_GREEN); else drawLeft(ILI9341_BLACK);
   if (digitalRead(IN_PIN_4) == LOW) drawRight(ILI9341_GREEN); else drawRight(ILI9341_BLACK);
   if (digitalRead(IN_PIN_6) == LOW) drawButton(-1,ILI9341_GREEN); else drawButton(-1,ILI9341_BLACK);
-  if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
+  if (showInputPins) drawPortPins(inputPinDisplay_x,inputPinDisplay_y,8, portDisp);
 }
 
 void ReadKeypad_Coleco()
@@ -372,7 +332,7 @@ void ReadKeypad_Coleco()
   drawKeyPress();
 
   if (digitalRead(IN_PIN_6) == LOW) drawButton(1,ILI9341_GREEN); else drawButton(1,ILI9341_BLACK);
-  if (showInputPins) drawInputPins(inputPinDisplay_x,inputPinDisplay_y,8);
+  if (showInputPins) drawPortPins(inputPinDisplay_x,inputPinDisplay_y,8, portDisp);
 }
 
 void drawKeyPress()
@@ -559,92 +519,139 @@ void drawRight (uint16_t color)
   tft.fillRect(x+21,y+51,20,19, color);
 }
 
-void drawInputPins(int x0, int y0 , int r)
+int readTouchScreen ()
 {
-    int x = x0, y = y0, pad = 2*r+6;
-    
-    p1 = digitalRead(IN_PIN_1);
-    p2 = digitalRead(IN_PIN_2);
-    p3 = digitalRead(IN_PIN_3);
-    p4 = digitalRead(IN_PIN_4);
-    p5 = digitalRead(IN_PIN_5);
-    p6 = digitalRead(IN_PIN_6);
-    p7 = digitalRead(IN_PIN_7);
-    p8 = digitalRead(IN_PIN_8);    
-    p9 = digitalRead(IN_PIN_9);
+    if (ts.bufferEmpty()) 
+    {
+      return 0;
+    }
+     // Retrieve a point 
+     TS_Point p; 
+     while (ts.touched())
+     {
+        p = ts.getPoint();
+     }
 
-    x=x+pad;
-    if (p1 != op1)
-    {
-      if (!p1) drawPin(x,y,'1',ILI9341_WHITE, 0x8200, r); //brown = 0x8200
-      else  drawPin(x,y,'1',ILI9341_WHITE, ILI9341_BLACK, r);
-      op1  = p1;
-    }
-    
-    x=x+pad;
-    if (p2 != op2)
-    {
-      if (!p2) drawPin(x,y,'2',ILI9341_WHITE, ILI9341_RED, r); 
-      else  drawPin(x,y,'2',ILI9341_WHITE, ILI9341_BLACK, r);
-      op2  = p2;
-    }
+    // Scale from ~0->4000 to tft.width using the calibration #'s
+    TS_Point t;
+    t.x = constrain(p.x,TS_MINX,TS_MAXX);
+    t.y = constrain(p.y,TS_MINY,TS_MAXY);
+    //rotate x,y
+    p.x = map(t.y, TS_MINY, TS_MAXY, 0, tft.width());
+    p.y = map(t.x, TS_MINX, TS_MAXX, tft.height(), 0);
+   
+    Serial.print("("); Serial.print(p.x);
+    Serial.print(", "); Serial.print(p.y);
+    Serial.println(")");
 
-    x=x+pad;
-    if (p3 != op3)
+    if ((p.x >=  60 && p.x < 100) && (p.y >= 30  && p.y < 65 ))  
     {
-      if (!p3) drawPin(x,y,'3',ILI9341_WHITE, ILI9341_ORANGE, r); 
-      else  drawPin(x,y,'3',ILI9341_WHITE, ILI9341_BLACK, r);
-      op3  = p3;
-    }  
+      return 1;
+    }
+    else if ((p.x >= 100 && p.x < 140) && (p.y >= 30  && p.y < 65 )) 
+    {
+      return 2;
+    }
+    else if ((p.x >= 140 && p.x < 190) && (p.y >= 30  && p.y < 65 ))  
+    {
+      return 3;
+    }
+    else if ((p.x >= 190 && p.x < 230) && (p.y >= 30  && p.y < 65 ))  
+    {
+      return 4;
+    }
+    else if ((p.x >= 230 && p.x < 280) && (p.y >= 30  && p.y < 65 ))  
+    {
+      return 5;
+    }
+    else if ((p.x >=  95 && p.x < 125) && (p.y >= 80  && p.y < 120 ))  
+    {
+      return 6;
+    }
+    else if ((p.x >= 125 && p.x < 165) && (p.y >= 80  && p.y < 120 ))  
+    {
+      return 7;
+    }
+    else if ((p.x >= 165 && p.x < 215) && (p.y >= 80  && p.y < 120 ))  
+    {
+      return 8;
+    }
+    else if ((p.x >= 215 && p.x < 255) && (p.y >= 80  && p.y < 120 ))  
+    {
+      return 9;
+    }
+    else
+    {
+      return 0;
+    }
+}
 
-    x=x+pad;
-    if (p4 != op4)
-    {
-      if (!p4) drawPin(x,y,'4',ILI9341_BLACK, ILI9341_YELLOW, r); 
-      else  drawPin(x,y,'4',ILI9341_WHITE, ILI9341_BLACK, r);
-      op4  = p4;
-    }   
-    
-    x=x+pad;
-    if (p5 != op5)
-    {
-      if (!p5) drawPin(x,y,'5',ILI9341_BLACK, ILI9341_DARKGREEN, r); 
-      else  drawPin(x,y,'5',ILI9341_WHITE, ILI9341_BLACK, r);
-      op5  = p5;
-    }
-    
-    //x=x0+pad+11; y=y0+2*r+3;
-    x=x0+1.5*pad; y=y0+2*r+3;
-    if (p6 != op6)
-    {
-      if (!p6) drawPin(x,y,'6',ILI9341_BLACK, ILI9341_NAVY, r); 
-      else  drawPin(x,y,'6',ILI9341_WHITE, ILI9341_BLACK, r);
-      op6  = p6;
-    }
+void togglePin(int pin)
+{
+  if (digitalRead(pin) == HIGH)
+  {
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
+  }
+  else
+  {
+    pinMode (pin, INPUT_PULLUP);
+  }
+}
 
-    x=x+pad;
-    if (p7 != op7)
-    {
-      if (!p7) drawPin(x,y,'7',ILI9341_BLACK, ILI9341_PURPLE, r); 
-      else  drawPin(x,y,'7',ILI9341_WHITE, ILI9341_BLACK, r);
-      op7  = p7;
-    }
+void drawPortPins(int x0, int y0, int r, String port)
+{
+  if (port == "INPUT" || port == "IN" || port == "I")
+  {
+    p[0] = digitalRead(IN_PIN_1);
+    p[1] = digitalRead(IN_PIN_2);
+    p[2] = digitalRead(IN_PIN_3);
+    p[3] = digitalRead(IN_PIN_4);
+    p[4] = digitalRead(IN_PIN_5);
+    p[5] = digitalRead(IN_PIN_6);
+    p[6] = digitalRead(IN_PIN_7);
+    p[7] = digitalRead(IN_PIN_8);    
+    p[8] = digitalRead(IN_PIN_9);
+  }
+  else if (port == "OUTPUT" || port == "OUT" || port == "O")
+  {
+    p[0] = digitalRead(OUT_PIN_1);
+    p[1] = digitalRead(OUT_PIN_2);
+    p[2] = digitalRead(OUT_PIN_3);
+    p[3] = digitalRead(OUT_PIN_4);
+    p[4] = digitalRead(OUT_PIN_5);
+    p[5] = digitalRead(OUT_PIN_6);
+    p[6] = digitalRead(OUT_PIN_7);
+    p[7] = digitalRead(OUT_PIN_8);    
+    p[8] = digitalRead(OUT_PIN_9);
+  }
 
-    x=x+pad;
-    if (p8 != op8)
+  int x = x0, y = y0, pad = 2*r+6;
+  
+  for (int i = 0; i < 9 ; i++ )
+  {
+    if (i == 5 ) 
     {
-      if (!p8) drawPin(x,y,'8',ILI9341_BLACK, ILI9341_DARKGREY, r); 
-      else  drawPin(x,y,'8',ILI9341_WHITE, ILI9341_BLACK, r);
-      op8  = p8;
+      x=x0+1.5*pad; y=y0+2*r+3; 
     }
+    else x=x+pad;
     
-    x=x+pad;
-    if (p9 != op9)
+    if (p[i] != op[i])
     {
-      if (!p9) drawPin(x,y,'9',ILI9341_BLACK,  ILI9341_WHITE, r); 
-      else  drawPin(x,y,'9',ILI9341_WHITE, ILI9341_BLACK, r);
-      op9  = p9;
-    } 
+      String str = String(i+1); char pn[2];
+      str.toCharArray(pn,2);
+      if (!p[i]) 
+      {
+        drawPin(x,y,pn[0],ILI9341_WHITE, c[i], r);
+      }
+      else  
+      {
+        drawPin(x,y,pn[0],ILI9341_WHITE, ILI9341_BLACK, r);
+      }
+      op[i]  = p[i];
+    }
+  }
+ 
 }
 
 void drawPin (int x, int y, char c, uint16_t color, uint16_t bg, int r)
